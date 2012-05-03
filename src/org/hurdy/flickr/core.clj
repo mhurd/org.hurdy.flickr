@@ -3,6 +3,7 @@
 (require '[clj-http.client :as client])
 
 (use '[clojure.string :only (join)])
+(use '[clojure.xml :only (parse)])
 
 (def flickr-key "1c46840d769cbf7e2281680ea58a45ed")
 
@@ -25,5 +26,8 @@
   )
 
 (defn get-public-photos [numberOfPhotos]
-  (client/get (create-url "flickr.people.getPublicPhotos" (create-param-string {"per_page" numberOfPhotos})))
+  (let [uri (create-url "flickr.people.getPublicPhotos" {"per_page" numberOfPhotos})]
+    (println uri)
+    (parse uri)
+    )
   )

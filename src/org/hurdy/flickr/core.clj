@@ -25,9 +25,46 @@
   (str flickr-rest-api (clojure.string/join "&" (complete-request-params method request-params)))
   )
 
-(defn get-public-photos [numberOfPhotos]
-  (let [uri (create-url "flickr.people.getPublicPhotos" {"per_page" numberOfPhotos})]
-    (println uri)
-    (parse uri)
+(defn flickr-people-getPublicPhotos [page numberOfPhotosPerPage]
+  (parse (create-url "flickr.people.getPublicPhotos" {"per_page" numberOfPhotosPerPage "page" page}))
+  )
+
+(defn match-tag [element expectedTag]
+  (if (= expectedTag (:tag element)) (:attrs element))
+  )
+
+(defn constructPhotoSourceURL [photo-attrs size]
+  (str "http://farm" (:farm photo-attrs) ".staticflickr.com/" (:server photo-attrs) "/" (:id photo-attrs) "_" (:secret photo-attrs) "_" size ".jpg")
+  )
+
+(defn getPublicPhotoSourceURLs
+  "Accepted sizes for photos are of the set [mstzb], medium, small, thumbnail, larger and even larger"
+  ([numberOfPhotosPerPage size]
+    (getPublicPhotoSourceURLs numberOfPhotosPerPage 1 size))
+  ([numberOfPhotosPerPage page size]
+    (println (str "Getting page " page))
+    (for [x
+        (map #(constructPhotoSourceURL % size)
+          (filter identity (map #(match-tag % :photo) (xml-seq (flickr-people-getPublicPhotos page numberOfPhotosPerPage)))))] x))
+  )
+
+(defn getPages [photosAttrs]
+  (Math/ceil (/ (Integer/parseInt (:pages photosAttrs)) 500))
+  )
+
+(defn getAllPublicPhotoSourceURLs
+  "Accepted sizes for photos are of the set [mstzb], medium, small, thumbnail, larger and even larger"
+  [size]
+    ; Get a sample page to determine the number of pages given a max size of 500 photos per-page
+    (let [pages (map #(getPages %)
+      (filter identity (map #(match-tag % :photos) (xml-seq (flickr-people-getPublicPhotos 1 1)))))]
+      ; count through and make each of the calls
+      (for [x (range 1 (+ 1 (first pages)) 1)]
+        (getPublicPhotoSourceURLs 500 x size))
     )
+  )
+
+(defn printAllSquarePublicPhotoSourceURLs []
+    (for [x (filter identity (flatten (getAllPublicPhotoSourceURLs "s")))]
+      (println x))
   )

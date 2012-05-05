@@ -122,13 +122,13 @@
   (Math/abs (bit-and rgb 0xFF))
   )
 
-(defn get-avg-color [num-of-pixels totalR totalG totalB]
+(defn calculate-avg-rgb-value [num-of-pixels totalR totalG totalB]
   {:r (int (/ totalR num-of-pixels)),
    :g (int (/ totalG num-of-pixels)),
    :b (int (/ totalB num-of-pixels))}
   )
 
-(defn get-pixel-rgbs [img width height imgtype]
+(defn get-pixel-rgb-values [img width height imgtype]
   (let [simg (java.awt.image.BufferedImage. width height imgtype)
         xRange (range 0 width 1)
         yRange (range 0 height 1)
@@ -152,9 +152,9 @@
         width (.getWidth img)
         height (.getHeight img)
         totals (get-avg3 img width height imgtype)
-        {:keys [r g b]} (apply merge-with + (get-pixel-rgbs url))
+        {:keys [r g b]} (apply merge-with + (get-pixel-rgb-values url))
         pixels (* width height)]
-      (get-avg-color pixels r g b)
+      (calculate-avg-rgb-value pixels r g b)
     )
   )
 

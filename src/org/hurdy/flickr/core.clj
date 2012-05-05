@@ -1,11 +1,14 @@
 (ns org.hurdy.flickr.core)
 
+(import java.net.URL)
+(import javax.imageio.ImageIO)
+(import java.awt.image.BufferedImage)
+
 (require '[clj-http.client :as client])
 
 (use '[clojure.string :only (join)])
 (use '[clojure.xml :only (parse)])
-
-(import '(java.util.concurrent Executors))
+(use '[clojure.java.io :only [as-file]])
 
 (def flickr-key "1c46840d769cbf7e2281680ea58a45ed")
 
@@ -94,11 +97,10 @@
     (get-public-photo-source-urls 1 number-of-photos-per-page size))
   ([page number-of-photos-per-page size]
     (println (str "Getting " number-of-photos-per-page " photos from page " page))
-    (for [x
-      (map #(construct-photo-source-url % size)
-        (filter identity
-          (map #(match-tag % :photo )
-            (xml-seq (flickr-people-get-public-photos page number-of-photos-per-page)))))]
+    (for [x (map #(construct-photo-source-url % size)
+              (filter identity
+                (map #(match-tag % :photo )
+                  (xml-seq (flickr-people-get-public-photos page number-of-photos-per-page)))))]
       x))
   )
 
@@ -107,6 +109,54 @@
      agents
      (recur (conj agents (agent (first range-of-pages)))
         (rest range-of-pages))))
+
+(defn getR [rgb]
+  (Math/abs (bit-and (bit-shift-right rgb 16) 0xFF))
+  )
+
+(defn getG [rgb]
+  (Math/abs (bit-and (bit-shift-right rgb 8) 0xFF))
+  )
+
+(defn getB [rgb]
+  (Math/abs (bit-and rgb 0xFF))
+  )
+
+(defn get-avg-color [num-of-pixels totalR totalG totalB]
+  {:r (int (/ totalR num-of-pixels)),
+   :g (int (/ totalG num-of-pixels)),
+   :b (int (/ totalB num-of-pixels))}
+  )
+
+(defn get-pixel-rgbs [img width height imgtype]
+  (let [simg (java.awt.image.BufferedImage. width height imgtype)
+        xRange (range 0 width 1)
+        yRange (range 0 height 1)
+        g (.createGraphics simg)]
+      (.drawImage g img 0 0 width height nil)
+      (for [y yRange
+            x xRange]
+            (let [rgb (.getRGB simg x y)
+                  red (getR rgb)
+                  green (getG rgb)
+                  blue (getB rgb)]
+              {:r red, :g green, :b blue}
+            )
+      )
+    )
+)
+
+(defn get-avg-rgb-value [url]
+  (let [img (javax.imageio.ImageIO/read (URL. url))
+        imgtype (java.awt.image.BufferedImage/TYPE_INT_ARGB)
+        width (.getWidth img)
+        height (.getHeight img)
+        totals (get-avg3 img width height imgtype)
+        {:keys [r g b]} (apply merge-with + (get-pixel-rgbs url))
+        pixels (* width height)]
+      (get-avg-color pixels r g b)
+    )
+  )
 
 (defn get-all-public-photo-source-urls [size]
   ; Get a sample page to determine the number of pages given a max size of 500 photos per-page

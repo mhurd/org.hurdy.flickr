@@ -164,7 +164,7 @@
     flickr-xml-seq (xml-seq (flickr-people-get-public-photos 1 1))
     total-pages (:pages (first (get-attributes-of-matching-tags flickr-xml-seq :photos)))
     pages (get-page-count (Integer/parseInt total-pages) max-photos-per-page)
-    page-range (range 1 (+ 1 pages) 1)
+    page-range (range 1 (inc pages) 1)
     agents (spawn-agents [] page-range)
     urls (ref [])]
       ; send each agent a job to do
@@ -177,9 +177,10 @@
       (doseq [agent agents]
         #_(println (str "Agent" agent " got " (count @agent) " photos"))
         (dosync
+          ; use ref-set as no other threads are modifying this var
           (ref-set urls (flatten (conj @urls @agent))))
         )
-      ; clean up although not right now as this is running in the repl
+      ; clean up although marked as ignore as this is running in the repl for now
       #_(shutdown-agents)
       @urls
     )

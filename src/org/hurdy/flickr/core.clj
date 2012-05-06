@@ -49,13 +49,6 @@
     (join "&" (apply complete-request-params method request-params)))
   )
 
-(defn match-tag [element expected-tag]
-  ; if the :tag of the specified element matches
-  ; the expectedTag the return the :attrs of the element
-  ; otherwise return nil
-  (if (= expected-tag (:tag element)) (:attrs element))
-  )
-
 (defn flickr-people-get-public-photos [page number-of-photos-per-page]
   ; use the xml parse function to call the flickr.people.getPublicPhotos method
   ; getting the specified page given the number of photos per page required
@@ -88,8 +81,15 @@
   (Math/ceil (/ total-pages photos-per-page))
   )
 
-(defn get-matching-tags [tag flickr-xml-seq]
-  (filter identity (map #(match-tag % tag) flickr-xml-seq))
+(defn get-attributes-of-matching-tag [element tag-to-match]
+  ; if the :tag of the specified element matches
+  ; the expectedTag the return the :attrs of the element
+  ; otherwise return nil
+  (if (= tag-to-match (:tag element)) (:attrs element))
+  )
+
+(defn get-attributes-of-matching-tags [flickr-xml-seq tag-to-match]
+  (filter identity (map #(get-attributes-of-matching-tag % tag-to-match) flickr-xml-seq))
   )
 
 (defn get-public-photo-source-urls
@@ -97,11 +97,10 @@
     (get-public-photo-source-urls 1 number-of-photos-per-page size))
   ([page number-of-photos-per-page size]
     (println (str "Getting " number-of-photos-per-page " photos from page " page))
-    (for [x (map #(construct-photo-source-url % size)
+    (map #(construct-photo-source-url % size)
               (filter identity
-                (map #(match-tag % :photo )
-                  (xml-seq (flickr-people-get-public-photos page number-of-photos-per-page)))))]
-      x))
+                (map #(get-attributes-of-matching-tag % :photo )
+                  (xml-seq (flickr-people-get-public-photos page number-of-photos-per-page))))))
   )
 
 (defn spawn-agents [agents range-of-pages]
@@ -122,13 +121,13 @@
   (Math/abs (bit-and rgb 0xFF))
   )
 
-(defn calculate-avg-rgb-value [num-of-pixels totalR totalG totalB]
-  {:r (int (/ totalR num-of-pixels)),
-   :g (int (/ totalG num-of-pixels)),
-   :b (int (/ totalB num-of-pixels))}
+(defn calculate-avg-rgb-value [number-of-pixels totalR totalG totalB]
+  {:r (int (/ totalR number-of-pixels)),
+   :g (int (/ totalG number-of-pixels)),
+   :b (int (/ totalB number-of-pixels))}
   )
 
-(defn get-pixel-rgb-values [img width height imgtype]
+(defn get-rgb-data [img width height imgtype]
   (let [simg (java.awt.image.BufferedImage. width height imgtype)
         xRange (range 0 width 1)
         yRange (range 0 height 1)
@@ -151,10 +150,10 @@
         imgtype (java.awt.image.BufferedImage/TYPE_INT_ARGB)
         width (.getWidth img)
         height (.getHeight img)
-        totals (get-avg3 img width height imgtype)
-        {:keys [r g b]} (apply merge-with + (get-pixel-rgb-values url))
-        pixels (* width height)]
-      (calculate-avg-rgb-value pixels r g b)
+        rgb-data (get-rgb-data img width height imgtype)
+        {:keys [r g b]} (apply merge-with + rgb-data)
+        number-of-pixels (* width height)]
+      (calculate-avg-rgb-value number-of-pixels r g b)
     )
   )
 
@@ -163,7 +162,7 @@
   (let
     [max-photos-per-page 500
     flickr-xml-seq (xml-seq (flickr-people-get-public-photos 1 1))
-    total-pages (:pages (first (get-matching-tags :photos flickr-xml-seq)))
+    total-pages (:pages (first (get-attributes-of-matching-tags flickr-xml-seq :photos)))
     pages (get-page-count (Integer/parseInt total-pages) max-photos-per-page)
     page-range (range 1 (+ 1 pages) 1)
     agents (spawn-agents [] page-range)

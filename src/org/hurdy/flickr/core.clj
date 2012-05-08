@@ -145,6 +145,24 @@
     )
 )
 
+(defn strip-non-colors [rgb-frequencies]
+  ; remove rgb values where R & G & B < 30 or r & G & B > 225
+  ; mmh, how to do this on the frequency map that looks
+  ; like {:r 187, :g 194, :b 213} 1, {:r 213, :g 175, :b 6} 1
+  ; ... till' I work this out just return the map back again.
+  rgb-frequencies
+  )
+
+(defn get-dominant-rgb-value [url]
+  (let [img (javax.imageio.ImageIO/read (URL. url))
+        imgtype (java.awt.image.BufferedImage/TYPE_INT_ARGB)
+        width (.getWidth img)
+        height (.getHeight img)
+        rgb-data (get-rgb-data img width height imgtype)]
+      (first (strip-non-colors (sort-by val > (frequencies rgb-data))))
+    )
+  )
+
 (defn get-avg-rgb-value [url]
   (let [img (javax.imageio.ImageIO/read (URL. url))
         imgtype (java.awt.image.BufferedImage/TYPE_INT_ARGB)

@@ -25,14 +25,15 @@
       "http://api.flickr.com/services/rest/?api_key=1c46840d769cbf7e2281680ea58a45ed&bar=foo&foo=bar&format=rest&method=my-method&user_id=67155975@N00"))
   )
 
-(deftest test-get-attributes-of-matching-tag
-  (is
-    (nil?
-      (get-attributes-of-matching-tag {:tag "foo" :attrs "test"} "bar")))
+(deftest test-get-attributes-of-elements
   (is
     (=
-      (get-attributes-of-matching-tag {:tag "foo" :attrs "test"} "foo")
-      "test"))
+      '()
+      (get-attributes-of-elements :attrs :bar '({:tag :foo, :attrs "test"}))))
+  (is
+    (=
+      '("test1" "test2")
+      (get-attributes-of-elements :attrs :foo '({:tag :foo, :attrs "test1"},{:tag :foo, :attrs "test2"}))))
   )
 
 (deftest test-construct-photo-source-url

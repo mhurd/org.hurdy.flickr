@@ -214,6 +214,15 @@
     )
   )
 
+(defn get-avg-rgb-value-as-css
+  "Downloads the image at the specified URL and then returns the
+  average RGB value of the image in the form rgb(R,G,B)"
+  [url]
+  (let [rgb-data (get-avg-rgb-value url)]
+      (str "rgb(" (:r rgb-data) "," (:g rgb-data) "," (:b rgb-data) ")")
+    )
+  )
+
 (defn get-all-public-photo-source-urls
   "Get a sample page to determine the number of pages given a max size of 500 photos per-page."
   [size]

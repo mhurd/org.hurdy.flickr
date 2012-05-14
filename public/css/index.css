@@ -1,0 +1,26 @@
+body {
+    margin:50px 0px; padding:0px;
+    font-family: 'Quicksand', sans-serif;
+    text-align: center;
+    background-color: #9fbfd6;
+    color: #382513;
+}
+
+#content {
+	width:800px;
+	margin:0px auto;
+	text-align:center;
+	padding:15px;
+	border:1px ridge #333;
+	background-color:#eee;
+}
+
+#cthulhu {
+	width:350px;
+    height:263px;
+	margin:0px auto;
+}
+
+h1 h2 {
+    font-family: 'Quicksand', sans-serif;
+}

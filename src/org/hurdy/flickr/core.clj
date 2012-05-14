@@ -68,12 +68,12 @@
       (create-url "flickr.people.getPublicPhotos" "per_page" number-of-photos-per-page "page" page))
   )
 
-(defn construct-photo-source-url
-  "Creates the actual photo URL given the photo element attributes as
-  retrieved from the Flickr API.
+(defn construct-photo-source-base-url
+  "Creates the actual base photo URL (excluding the size and .jpg) given
+  the photo element attributes as retrieved from the Flickr API.
   use let to extract the named keys from the supplied photo attributes map
   and use them as local variables"
-  [photo-attrs size]
+  [photo-attrs]
     (let [{:keys [farm server id secret]} photo-attrs]
       (str
         "http://farm"
@@ -83,10 +83,7 @@
         "/"
         id
         "_"
-        secret
-        "_"
-        size
-        ".jpg")
+        secret)
       )
   )
 
@@ -106,14 +103,14 @@
               (attribute x))
   )
 
-(defn get-public-photo-source-urls
-  "Gets the specified page of public photo source URLs for the size code specified,
-  i.e. s = square, t = thumbnail"
-  ([number-of-photos-per-page size]
-    (get-public-photo-source-urls 1 number-of-photos-per-page size))
-  ([page number-of-photos-per-page size]
+(defn get-public-photo-source-base-urls
+  "Gets the specified page of public photo source URLs with no size specified (the tail of the URL
+  including the .jpg)"
+  ([number-of-photos-per-page]
+    (get-public-photo-source-urls 1 number-of-photos-per-page))
+  ([page number-of-photos-per-page]
     (println (str "Getting " number-of-photos-per-page " photos from page " page))
-    (map #(construct-photo-source-url % size)
+    (map #(construct-photo-source-base-url %)
       (for [x (xml-seq (flickr-people-get-public-photos page number-of-photos-per-page))
               :when (= :photo (:tag x))]
               (:attrs x)))
@@ -154,6 +151,16 @@
   {:r (int (/ totalR number-of-pixels)),
    :g (int (/ totalG number-of-pixels)),
    :b (int (/ totalB number-of-pixels))}
+  )
+
+(defn convert-to-complimentary-rgb-value
+  "Calculates the average RGB value given the total
+  Red, Blue and Green values and the size of the
+  image in pixels."
+  [rgb]
+  {:r (- 255 (:r rgb)),
+   :g (- 255 (:g rgb)),
+   :b (- 255 (:b rgb))}
   )
 
 (defn get-rgb-data
@@ -214,18 +221,63 @@
     )
   )
 
-(defn get-avg-rgb-value-as-css
-  "Downloads the image at the specified URL and then returns the
-  average RGB value of the image in the form rgb(R,G,B)"
-  [url]
-  (let [rgb-data (get-avg-rgb-value url)]
-      (str "rgb(" (:r rgb-data) "," (:g rgb-data) "," (:b rgb-data) ")")
-    )
+(defn as-css-rgb-value
+  "Converts {:r R :g G :b B} to a string = rgb(R,G,B)"
+  [rgb]
+    (str "rgb(" (:r rgb) "," (:g rgb) "," (:b rgb) ")")
   )
 
-(defn get-all-public-photo-source-urls
+(defn get-small-square-image-url
+  "small square 75x75"
+  [base-url]
+  (str base-url "_s.jpg")
+  )
+
+(defn get-large-square-image-url
+  "large square 150x150"
+  [base-url]
+  (str base-url "_q.jpg")
+  )
+
+(defn get-thumbnail-image-url
+    "thumbnail, 100 on longest side"
+    [base-url]
+    (str base-url "_t.jpg")
+    )
+
+(defn get-small240-image-url
+  "small, 240 on longest side"
+  [base-url]
+  (str base-url "_m.jpg")
+  )
+
+(defn get-small320-image-url
+  "small, 320 on longest side"
+  [base-url]
+  (str base-url "_n.jpg")
+  )
+
+(defn get-medium500-image-url
+  "medium, 500 on longest side"
+  [base-url]
+  (str base-url ".jpg")
+  )
+
+(defn get-medium640-image-url
+  "medium 640, 640 on longest side"
+  [base-url]
+  (str base-url "_z.jpg")
+  )
+
+(defn get-large-image-url
+  "large, 1024 on longest side"
+  [base-url]
+  (str base-url "_b.jpg")
+  )
+
+(defn get-all-public-photo-source-base-urls
   "Get a sample page to determine the number of pages given a max size of 500 photos per-page."
-  [size]
+  []
   (let
     [max-photos-per-page 500
     flickr-xml-seq (xml-seq (flickr-people-get-public-photos 1 1))
@@ -237,7 +289,7 @@
       ; send each agent a job to do
       (println (str "Agent count = " (count agents)))
       (doseq [agent agents]
-        (send agent #(get-public-photo-source-urls % max-photos-per-page size)))
+        (send agent #(get-public-photo-source-urls % max-photos-per-page)))
       ; ensure successful dispatch
       (apply await agents)
       ; view the results
@@ -254,5 +306,5 @@
   )
 
 (defn count-all-public-photo-source-urls []
-  (println (str "Got " (count (get-all-public-photo-source-urls "s")) " photos"))
+  (println (str "Got " (count (get-all-public-photo-source-urls)) " photos"))
   )

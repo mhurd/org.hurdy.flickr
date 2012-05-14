@@ -10,26 +10,41 @@
   (:require [compojure.route :as route]
             [org.hurdy.flickr.core :as flickr]))
 
-(def images (atom '()))
-(def thumbs (atom '()))
+(def photo-range 500)
+
+(def base-uris (atom '()))
 
 (defn get-image [index]
-  (nth @images index)
+  (flickr/get-medium500-image-url (nth @base-uris index))
   )
 
-(defn get-rgb [index]
-  (flickr/get-avg-rgb-value-as-css (nth @thumbs index))
+(defn get-complimentary-rgb [index]
+  (flickr/as-css-rgb-value (flickr/convert-to-complimentary-rgb-value (flickr/get-avg-rgb-value (flickr/get-thumbnail-image-url (nth @base-uris index)))))
+  )
+
+(defn get-average-rgb [index]
+  (flickr/as-css-rgb-value (flickr/get-avg-rgb-value (flickr/get-thumbnail-image-url (nth @base-uris index))))
   )
 
 (deftemplate index-page "index-template.html" [random-index]
   [:div#example-img :img] (set-attr :src (get-image random-index))
-  [:div#example-img-container] (set-attr :style (str "background-color:" (get-rgb random-index) ";"))
+  [:div#example-img-container] (set-attr :style (str "background-color:" (get-average-rgb random-index) ";"))
+  [:div#example-img-text :h2] (content (str "random image " random-index " bordered with the image's average RGB colour"))
+  [:div#example-img-text :h2] (set-attr :style (str "color:" (get-complimentary-rgb random-index) ";"))
+  )
+
+(deftemplate index-page-complimentary "index-template.html" [random-index]
+  [:div#example-img :img] (set-attr :src (get-image random-index))
+  [:div#example-img-container] (set-attr :style (str "background-color:" (get-complimentary-rgb random-index) ";"))
+  [:div#example-img-text :h2] (content (str "random image " random-index " bordered with the image's compilmentary average RGB colour"))
+  [:div#example-img-text :h2] (set-attr :style (str "color:" (get-average-rgb random-index) ";"))
   )
 
 (deftemplate lost-page "404-template.html" [])
 
 (defroutes myroutes
-  (GET "/" [] (index-page (rand-int 100)))
+  (GET "/" [] (index-page (rand-int photo-range)))
+  (GET "/complimentary" [] (index-page-complimentary (rand-int photo-range)))
   (route/not-found (lost-page))
  )
 
@@ -38,11 +53,8 @@
            (wrap-file "public")))
 
 (defn start-flickr-server []
-  (let [random-index (rand-int 100)
-        thumb-uris (flickr/get-public-photo-source-urls 1 100 "t")
-        image-uris (flickr/get-public-photo-source-urls 1 100 "z")]
-    (swap! images into image-uris)
-    (swap! thumbs into thumb-uris)
+  (let [uris (flickr/get-public-photo-source-base-urls 1 photo-range)]
+    (swap! base-uris into uris)
     (def test-server (run-jetty app {:port 8080 :join? false})))
   )
 

@@ -12,4 +12,5 @@
               [lein-marginalia "0.7.0"]
               [lein-ring "0.7.0-SNAPSHOT"]
             ]
+  :main org.hurdy.flickr.webserver
 )

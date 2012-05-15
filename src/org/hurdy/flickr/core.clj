@@ -107,7 +107,7 @@
   "Gets the specified page of public photo source URLs with no size specified (the tail of the URL
   including the .jpg)"
   ([number-of-photos-per-page]
-    (get-public-photo-source-urls 1 number-of-photos-per-page))
+    (get-public-photo-source-base-urls 1 number-of-photos-per-page))
   ([page number-of-photos-per-page]
     (println (str "Getting " number-of-photos-per-page " photos from page " page))
     (map #(construct-photo-source-base-url %)
@@ -289,7 +289,7 @@
       ; send each agent a job to do
       (println (str "Agent count = " (count agents)))
       (doseq [agent agents]
-        (send agent #(get-public-photo-source-urls % max-photos-per-page)))
+        (send agent #(get-public-photo-source-base-urls % max-photos-per-page)))
       ; ensure successful dispatch
       (apply await agents)
       ; view the results
@@ -306,5 +306,5 @@
   )
 
 (defn count-all-public-photo-source-urls []
-  (println (str "Got " (count (get-all-public-photo-source-urls)) " photos"))
+  (println (str "Got " (count (get-all-public-photo-source-base-urls)) " photos"))
   )

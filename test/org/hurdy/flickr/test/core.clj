@@ -39,8 +39,8 @@
 (deftest test-construct-photo-source-url
   (is
     (=
-      (construct-photo-source-url {:farm "f1" :server "s1" :id "i1" :secret "s2"} "s")
-      "http://farmf1.staticflickr.com/s1/i1_s2_s.jpg"))
+      (construct-photo-source-base-url {:farm "f1" :server "s1" :id "i1" :secret "s2"})
+      "http://farmf1.staticflickr.com/s1/i1_s2"))
   )
 
 (deftest test-get-page-count

@@ -8,7 +8,8 @@
         ring.middleware.params
         net.cgrand.enlive-html)
   (:require [compojure.route :as route]
-            [org.hurdy.flickr.core :as flickr]))
+            [org.hurdy.flickr.core :as flickr])
+  (:gen-class))
 
 (def photo-range 500)
 
@@ -45,18 +46,21 @@
 (defroutes myroutes
   (GET "/" [] (index-page (rand-int photo-range)))
   (GET "/complimentary" [] (index-page-complimentary (rand-int photo-range)))
+  (GET "/404" [] (lost-page))
+  (route/resources "/")
   (route/not-found (lost-page))
  )
 
 (def app (->
-           #'myroutes
-           (wrap-file "public")))
+           #'myroutes))
 
-(defn start-flickr-server []
+(defn start-flickr-server [host port]
   (let [uris (flickr/get-public-photo-source-base-urls 1 photo-range)]
     (swap! base-uris into uris)
-    (def test-server (run-jetty app {:port 8080 :join? false})))
+    (def test-server (run-jetty app {:host host :port port :join? false})))
   )
 
 (defn stop-flickr-server []
   (.stop test-server))
+
+(defn -main[& args] (start-flickr-server (first args) (Integer. (second args))))

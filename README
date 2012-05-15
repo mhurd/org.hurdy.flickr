@@ -1,10 +1,10 @@
 # org.hurdy.flickr
 
-A clojure wrapper around Flickr API calls
+A clojure wrapper around Flickr API calls used to showcase photos
 
-## Usage
+## URL
 
-
+http://photos-hurdy.rhcloud.com/
 
 ## License
 

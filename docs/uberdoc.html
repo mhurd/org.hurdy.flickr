@@ -3029,7 +3029,7 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>org.hurdy.flickr -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name">org.hurdy.flickr</h1><h2 class="project-version">1.0.0-SNAPSHOT</h2><br /><p>Clojure Flickr</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">clj-http</td><td class="dotted"><hr /></td><td class="dep-version">0.1.1</td></tr><tr><td class="dep-name">criterium</td><td class="dotted"><hr /></td><td class="dep-version">0.2.1-SNAPSHOT</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#org.hurdy.flickr.core">org.hurdy.flickr.core</a></li><li><a href="#org.hurdy.flickr.scratch">org.hurdy.flickr.scratch</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#org.hurdy.flickr.core" name="org.hurdy.flickr.core"><h1 class="project-name">org.hurdy.flickr.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.4.0</td></tr><tr><td class="dep-name">clj-http</td><td class="dotted"><hr /></td><td class="dep-version">0.4.1-SNAPSHOT</td></tr><tr><td class="dep-name">criterium</td><td class="dotted"><hr /></td><td class="dep-version">0.2.1-SNAPSHOT</td></tr><tr><td class="dep-name">ring</td><td class="dotted"><hr /></td><td class="dep-version">1.1.0-beta3</td></tr><tr><td class="dep-name">enlive</td><td class="dotted"><hr /></td><td class="dep-version">1.0.0-SNAPSHOT</td></tr><tr><td class="dep-name">compojure</td><td class="dotted"><hr /></td><td class="dep-version">1.1.0-SNAPSHOT</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#org.hurdy.flickr.core">org.hurdy.flickr.core</a></li><li><a href="#org.hurdy.flickr.scratch">org.hurdy.flickr.scratch</a></li><li><a href="#org.hurdy.flickr.webserver">org.hurdy.flickr.webserver</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#org.hurdy.flickr.core" name="org.hurdy.flickr.core"><h1 class="project-name">org.hurdy.flickr.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns org.hurdy.flickr.core)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(import java.net.URL)
 (import javax.imageio.ImageIO)
@@ -3075,12 +3075,12 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn flickr-people-get-public-photos
   [page number-of-photos-per-page]
     (parse
-      (create-url &quot;flickr.people.getPublicPhotos&quot; &quot;per_page&quot; number-of-photos-per-page &quot;page&quot; page)))</pre></td></tr><tr><td class="docs"><p>Creates the actual photo URL given the photo element attributes as
-  retrieved from the Flickr API.
+      (create-url &quot;flickr.people.getPublicPhotos&quot; &quot;per_page&quot; number-of-photos-per-page &quot;page&quot; page)))</pre></td></tr><tr><td class="docs"><p>Creates the actual base photo URL (excluding the size and .jpg) given
+  the photo element attributes as retrieved from the Flickr API.
   use let to extract the named keys from the supplied photo attributes map
   and use them as local variables</p>
-</td><td class="codes"><pre class="brush: clojure">(defn construct-photo-source-url
-  [photo-attrs size]
+</td><td class="codes"><pre class="brush: clojure">(defn construct-photo-source-base-url
+  [photo-attrs]
     (let [{:keys [farm server id secret]} photo-attrs]
       (str
         &quot;http://farm&quot;
@@ -3090,10 +3090,7 @@ net.brehaut.ClojureTools = (function (SH) {
         &quot;/&quot;
         id
         &quot;_&quot;
-        secret
-        &quot;_&quot;
-        size
-        &quot;.jpg&quot;)))</pre></td></tr><tr><td class="docs"><p>Determine how many pages to load given the total number of
+        secret)))</pre></td></tr><tr><td class="docs"><p>Determine how many pages to load given the total number of
   photos and the desired number per page.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn get-page-count
   [total-number-of-photos photos-per-page]
@@ -3103,14 +3100,14 @@ net.brehaut.ClojureTools = (function (SH) {
   [attribute element xml-sequence]
     (for [x xml-sequence
             :when (= (:tag x) element)]
-              (attribute x)))</pre></td></tr><tr><td class="docs"><p>Gets the specified page of public photo source URLs for the size code specified,
-  i.e. s = square, t = thumbnail</p>
-</td><td class="codes"><pre class="brush: clojure">(defn get-public-photo-source-urls
-  ([number-of-photos-per-page size]
-    (get-public-photo-source-urls 1 number-of-photos-per-page size))
-  ([page number-of-photos-per-page size]
+              (attribute x)))</pre></td></tr><tr><td class="docs"><p>Gets the specified page of public photo source URLs with no size specified (the tail of the URL
+  including the .jpg)</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-public-photo-source-base-urls
+  ([number-of-photos-per-page]
+    (get-public-photo-source-base-urls 1 number-of-photos-per-page))
+  ([page number-of-photos-per-page]
     (println (str &quot;Getting &quot; number-of-photos-per-page &quot; photos from page &quot; page))
-    (map #(construct-photo-source-url % size)
+    (map #(construct-photo-source-base-url %)
       (for [x (xml-seq (flickr-people-get-public-photos page number-of-photos-per-page))
               :when (= :photo (:tag x))]
               (:attrs x)))))</pre></td></tr><tr><td class="docs"><p>Spawns an agent for each of the pages</p>
@@ -3135,7 +3132,14 @@ net.brehaut.ClojureTools = (function (SH) {
   [number-of-pixels totalR totalG totalB]
   {:r (int (/ totalR number-of-pixels)),
    :g (int (/ totalG number-of-pixels)),
-   :b (int (/ totalB number-of-pixels))})</pre></td></tr><tr><td class="docs"><p>Collects all of the RGB values for the pixels of the image in the
+   :b (int (/ totalB number-of-pixels))})</pre></td></tr><tr><td class="docs"><p>Calculates the average RGB value given the total
+  Red, Blue and Green values and the size of the
+  image in pixels.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn convert-to-complimentary-rgb-value
+  [rgb]
+  {:r (- 255 (:r rgb)),
+   :g (- 255 (:g rgb)),
+   :b (- 255 (:b rgb))})</pre></td></tr><tr><td class="docs"><p>Collects all of the RGB values for the pixels of the image in the
   form {:r X :g Y :b Z}</p>
 </td><td class="codes"><pre class="brush: clojure">(defn get-rgb-data
   [img width height imgtype]
@@ -3176,9 +3180,36 @@ net.brehaut.ClojureTools = (function (SH) {
         rgb-data (get-rgb-data img width height imgtype)
         {:keys [r g b]} (apply merge-with + rgb-data)
         number-of-pixels (* width height)]
-      (calculate-avg-rgb-value number-of-pixels r g b)))</pre></td></tr><tr><td class="docs"><p>Get a sample page to determine the number of pages given a max size of 500 photos per-page.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn get-all-public-photo-source-urls
-  [size]
+      (calculate-avg-rgb-value number-of-pixels r g b)))</pre></td></tr><tr><td class="docs"><p>Converts {:r R :g G :b B} to a string = rgb(R,G,B)</p>
+</td><td class="codes"><pre class="brush: clojure">(defn as-css-rgb-value
+  [rgb]
+    (str &quot;rgb(&quot; (:r rgb) &quot;,&quot; (:g rgb) &quot;,&quot; (:b rgb) &quot;)&quot;))</pre></td></tr><tr><td class="docs"><p>small square 75x75</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-small-square-image-url
+  [base-url]
+  (str base-url &quot;_s.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>large square 150x150</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-large-square-image-url
+  [base-url]
+  (str base-url &quot;_q.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>thumbnail, 100 on longest side</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-thumbnail-image-url
+    [base-url]
+    (str base-url &quot;_t.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>small, 240 on longest side</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-small240-image-url
+  [base-url]
+  (str base-url &quot;_m.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>small, 320 on longest side</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-small320-image-url
+  [base-url]
+  (str base-url &quot;_n.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>medium, 500 on longest side</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-medium500-image-url
+  [base-url]
+  (str base-url &quot;.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>medium 640, 640 on longest side</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-medium640-image-url
+  [base-url]
+  (str base-url &quot;_z.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>large, 1024 on longest side</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-large-image-url
+  [base-url]
+  (str base-url &quot;_b.jpg&quot;))</pre></td></tr><tr><td class="docs"><p>Get a sample page to determine the number of pages given a max size of 500 photos per-page.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn get-all-public-photo-source-base-urls
+  []
   (let
     [max-photos-per-page 500
     flickr-xml-seq (xml-seq (flickr-people-get-public-photos 1 1))
@@ -3190,7 +3221,7 @@ net.brehaut.ClojureTools = (function (SH) {
       ; send each agent a job to do
       (println (str &quot;Agent count = &quot; (count agents)))
       (doseq [agent agents]
-        (send agent #(get-public-photo-source-urls % max-photos-per-page size)))
+        (send agent #(get-public-photo-source-base-urls % max-photos-per-page)))
       ; ensure successful dispatch
       (apply await agents)
       ; view the results
@@ -3203,12 +3234,58 @@ net.brehaut.ClojureTools = (function (SH) {
       #_(shutdown-agents)
       @urls))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn count-all-public-photo-source-urls []
-  (println (str &quot;Got &quot; (count (get-all-public-photo-source-urls &quot;s&quot;)) &quot; photos&quot;)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#org.hurdy.flickr.scratch" name="org.hurdy.flickr.scratch"><h1 class="project-name">org.hurdy.flickr.scratch</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+  (println (str &quot;Got &quot; (count (get-all-public-photo-source-base-urls)) &quot; photos&quot;)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#org.hurdy.flickr.scratch" name="org.hurdy.flickr.scratch"><h1 class="project-name">org.hurdy.flickr.scratch</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns org.hurdy.flickr.scratch)</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn calculate-triplets [product]
   (set (for [x (range 1 product)
         y (range 1 product)
         z (range 1 product)
      :when (= product (* x y z))]
-    (sort (list x y z)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+    (sort (list x y z)))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#org.hurdy.flickr.webserver" name="org.hurdy.flickr.webserver"><h1 class="project-name">org.hurdy.flickr.webserver</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns org.hurdy.flickr.webserver
+  (:use compojure.core
+        ring.adapter.jetty
+        ring.middleware.resource
+        ring.middleware.reload
+        ring.util.response
+        ring.middleware.file
+        ring.middleware.params
+        net.cgrand.enlive-html)
+  (:require [compojure.route :as route]
+            [org.hurdy.flickr.core :as flickr])
+  (:gen-class))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def photo-range 500)</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def base-uris (atom '()))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn get-image [index]
+  (flickr/get-medium500-image-url (nth @base-uris index)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn get-complimentary-rgb [index]
+  (flickr/as-css-rgb-value (flickr/convert-to-complimentary-rgb-value (flickr/get-avg-rgb-value (flickr/get-thumbnail-image-url (nth @base-uris index))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn get-average-rgb [index]
+  (flickr/as-css-rgb-value (flickr/get-avg-rgb-value (flickr/get-thumbnail-image-url (nth @base-uris index)))))</pre></td></tr><tr><td class="docs"><p>index-template.html</p>
+</td><td class="codes"><pre class="brush: clojure">(deftemplate index-page  [random-index]
+  [:div#example-img :img] (set-attr :src (get-image random-index))
+  [:div#example-img-container] (set-attr :style (str &quot;background-color:&quot; (get-average-rgb random-index) &quot;;&quot;))
+  [:div#example-img-text :h2] (content (str &quot;random image &quot; random-index &quot; bordered with the image's average RGB colour&quot;))
+  [:div#example-img-text :h2] (set-attr :style (str &quot;color:&quot; (get-complimentary-rgb random-index) &quot;;&quot;)))</pre></td></tr><tr><td class="docs"><p>index-template.html</p>
+</td><td class="codes"><pre class="brush: clojure">(deftemplate index-page-complimentary  [random-index]
+  [:div#example-img :img] (set-attr :src (get-image random-index))
+  [:div#example-img-container] (set-attr :style (str &quot;background-color:&quot; (get-complimentary-rgb random-index) &quot;;&quot;))
+  [:div#example-img-text :h2] (content (str &quot;random image &quot; random-index &quot; bordered with the image's compilmentary average RGB colour&quot;))
+  [:div#example-img-text :h2] (set-attr :style (str &quot;color:&quot; (get-average-rgb random-index) &quot;;&quot;)))</pre></td></tr><tr><td class="docs"><p>404-template.html</p>
+</td><td class="codes"><pre class="brush: clojure">(deftemplate lost-page  [])</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defroutes myroutes
+  (GET &quot;/&quot; [] (index-page (rand-int photo-range)))
+  (GET &quot;/complimentary&quot; [] (index-page-complimentary (rand-int photo-range)))
+  (GET &quot;/404&quot; [] (lost-page))
+  (route/resources &quot;/&quot;)
+  (route/not-found (lost-page)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(def app (-&gt;
+           #'myroutes))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn start-flickr-server [host port]
+  (let [uris (flickr/get-public-photo-source-base-urls 1 photo-range)]
+    (swap! base-uris into uris)
+    (def test-server (run-jetty app {:host host :port port :join? false}))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn stop-flickr-server []
+  (.stop test-server))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -main[&amp; args] (start-flickr-server (first args) (Integer. (second args))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/fogus/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
        SyntaxHighlighter.all()</script></body></html>

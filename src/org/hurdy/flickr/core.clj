@@ -11,15 +11,11 @@
 (use '[clojure.java.io :only [as-file]])
 
 (def
-  ^{:doc "Your flickr API key passed with calls"}
+  ^{:doc "Your flickr API key passed with calls - replace this with yours"}
   flickr-key "1c46840d769cbf7e2281680ea58a45ed")
 
 (def
-  ^{:doc "Your flickr API secret used to sign calls"}
-  flickr-consumer-secret "2cd273980ccde5db")
-
-(def
-  ^{:doc "The Flickr ID to use"}
+  ^{:doc "The Flickr ID to use - replace this with yours"}
   flickr-user-id "67155975@N00")
 
 (def

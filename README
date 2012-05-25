@@ -1,13 +1,9 @@
 # org.hurdy.flickr
 
-A clojure wrapper around Flickr API calls used to showcase photos
+A clojure wrapper around Flickr API calls used to showcase photos, early days, just playing around with 
+some basic image processing that calculates the image's average and complementary RGB colours. No persistence yet it just
+grabs the URIs on start-up for the latest 500 photos on my Flickr account and keeps them in-memory for the time-being.
 
-## URL
+## URL (may or may not be running)
 
 http://photos-hurdy.rhcloud.com/
-
-## License
-
-Copyright (C) 2012
-
-Distributed under the Eclipse Public License, the same as Clojure.

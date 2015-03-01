@@ -12,11 +12,11 @@
 
 (def
   ^{:doc "Your flickr API key passed with calls - replace this with yours"}
-  flickr-key "1c46840d769cbf7e2281680ea58a45ed")
+  flickr-key "xxxxxxxxxxxxxxxxxxxxxx")
 
 (def
   ^{:doc "The Flickr ID to use - replace this with yours"}
-  flickr-user-id "67155975@N00")
+  flickr-user-id "uuuuuuuuuu")
 
 (def
   ^{:doc "Base Flickr REST API URL"}
